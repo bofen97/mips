@@ -65,10 +65,10 @@ wire [31:0] ALUResult;
 wire [31:0] ALUOut;
 
 
-flopr_with_signal #(.WIDTH (32)) pc_reg(clk,reset,PCEn,pcnext,pc);
+flopr_with_signal #(.WIDTH (32)) pc_reg(clk,reset,PCEn,pcnext,pc); //cycle 1 ,PCen=1
 
-flopr_with_signal #(.WIDTH (32)) instr_reg(clk,reset,IRWrite,memoryRD,Instr);
-flopr #(.WIDTH (32)) data_reg(clk,reset,memoryRD,Data);
+flopr_with_signal #(.WIDTH (32)) instr_reg(clk,reset,IRWrite,memoryRD,Instr);//cycle 2,IRWrite=1,other = 0 
+flopr #(.WIDTH (32)) data_reg(clk,reset,memoryRD,Data);//cycyle 2 //cycle 5
 
 /*
     在这个设计中，将memory 移动到datapath的外部，这里会准备好A WD 
@@ -78,49 +78,49 @@ flopr #(.WIDTH (32)) data_reg(clk,reset,memoryRD,Data);
 
 //从Instr解码
 
-assign opcode = Instr[31:26];
-assign funct = Instr[5:0];
+assign opcode = Instr[31:26];//cycyle 2
+assign funct = Instr[5:0];//cycyle 2
 
 //Instr [15:0]
-signext signimm_reg(Instr[15:0],SignImm);
-sl2 signimmsl2_reg(SignImm,SignImmSl2);
+signext signimm_reg(Instr[15:0],SignImm);//cycyle 2
+sl2 signimmsl2_reg(SignImm,SignImmSl2);//cycyle 2
 
 
 
 //
-mux2 #(.WIDTH (5)) chooseA3(Instr[20:16],Instr[15:11],RegDst,A3);
-regfile regfile_main(clk,RegWrite,Instr[25:21],Instr[20:16],A3,WD3,RD1,RD2);
+mux2 #(.WIDTH (5)) chooseA3(Instr[20:16],Instr[15:11],RegDst,A3); //cycle 5 ,RegDst=0 ,RegWrite=1
+regfile regfile_main(clk,RegWrite,Instr[25:21],Instr[20:16],A3,WD3,RD1,RD2); //cycle 2
 /*
     WD3 的数据来源是Data or ALUOut的计算结果 
 */
 
 
-flopr #(.WIDTH (32)) a_reg(clk,reset,RD1,A);
-flopr #(.WIDTH (32)) b_reg(clk,reset,RD2,B);
+flopr #(.WIDTH (32)) a_reg(clk,reset,RD1,A);// cycle 3
+flopr #(.WIDTH (32)) b_reg(clk,reset,RD2,B); //cycle 3
 
 /*
 srcA 有两个输入，A 或者  pc  。
 */
-mux2 #(.WIDTH (32)) choosesrcA(pc,A,ALUSrcA,srcA);
+mux2 #(.WIDTH (32)) choosesrcA(pc,A,ALUSrcA,srcA);//cycle 1 ,ALUSrcA = 0 // cycle 3 ALUSrcA=1
 
 //srcB
 
-mux4 choosesrcB(ALUSrcB,B,32'b0100,SignImm,SignImmSl2,srcB);
+mux4 choosesrcB(ALUSrcB,B,32'b0100,SignImm,SignImmSl2,srcB); //cycle 1 ,ALUSrcB = 2'b01 //cycle 3  ALUSrcB=2'b10
 
 //根据alu control 计算结果
 //Zero是输出，用于计算控制信号
-alu alu_main(srcA,srcB,ALUControl,ALUResult,Zero);
+alu alu_main(srcA,srcB,ALUControl,ALUResult,Zero);//cycle 1 ,cycle 3, ALUControl = add == aluop=00
 
-flopr #(.WIDTH (32)) aluout_reg(clk,reset,ALUResult,ALUOut);
+flopr #(.WIDTH (32)) aluout_reg(clk,reset,ALUResult,ALUOut);//cycle 4
 
-mux2#(.WIDTH (32)) choosepcnext(ALUResult,ALUOut,PCSrc,pcnext);
-
-
-
-mux2#(.WIDTH (32)) chooseWd3(ALUOut,Data,MemToReg,WD3);
+mux2#(.WIDTH (32)) choosepcnext(ALUResult,ALUOut,PCSrc,pcnext); //cycle 1 ,PCSrc = 0
 
 
-mux2#(.WIDTH (32)) chooseid(pc,ALUOut,IorD,Adr);
+
+mux2#(.WIDTH (32)) chooseWd3(ALUOut,Data,MemToReg,WD3);//cycle  5 ,MemToReg=1
+
+
+mux2#(.WIDTH (32)) chooseid(pc,ALUOut,IorD,Adr); // cycle 1 , IorD=0 // cycle 4 IorD=1
 
 assign memoryWD = B;
 

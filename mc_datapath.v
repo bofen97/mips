@@ -5,6 +5,7 @@
 `include "sl2.v"
 `include "mux4.v"
 `include "alu.v"
+`include "mux3.v"
 module mc_datapath(
 
     clk,reset,
@@ -42,7 +43,7 @@ input wire RegDst;//用于选择目的寄存器。
 input wire ALUSrcA; //用于选择 pc or A
 input wire [1:0] ALUSrcB;//用于选择 B 4 signimm signimmsl2
 input wire [3:0] ALUControl;
-input wire PCSrc;
+input wire [1:0] PCSrc;
 input wire MemToReg;
 input wire IorD;
 output wire [31:0] Adr;
@@ -112,8 +113,8 @@ alu alu_main(srcA,srcB,ALUControl,ALUResult,Zero);//cycle 1 ,cycle 3, ALUControl
 
 flopr #(.WIDTH (32)) aluout_reg(clk,reset,ALUResult,ALUOut);//cycle 4
 
-mux2#(.WIDTH (32)) choosepcnext(ALUResult,ALUOut,PCSrc,pcnext); //cycle 1 ,PCSrc = 0
-
+// mux2#(.WIDTH (32)) choosepcnext(ALUResult,ALUOut,PCSrc,pcnext); //cycle 1 ,PCSrc = 0
+mux3 choosepcnext(PCSrc,ALUResult,ALUOut,{pc[31:28],Instr[25:0],2'b00},pcnext);
 
 
 mux2#(.WIDTH (32)) chooseWd3(ALUOut,Data,MemToReg,WD3);//cycle  5 ,MemToReg=1

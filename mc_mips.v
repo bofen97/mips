@@ -12,7 +12,8 @@ module mc_mips(
 input clk,reset;
 
 wire [5:0] Opcode,Funct;
-wire Zero,IorD,IRWrite,PCSrc,RegWrite,RegDst,MemToReg,PCEn,ALUSrcA;
+wire Zero,IorD,IRWrite,RegWrite,RegDst,MemToReg,PCEn,ALUSrcA;
+wire [1:0] PCSrc;
 wire [1:0] ALUSrcB ;
 wire [3:0] ALUControl;
 output wire MemWrite;

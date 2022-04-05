@@ -68,9 +68,10 @@ module fms_controller(
 input wire clk,reset;
 input wire[5:0] Opcode;
 
-output wire IorD,MemWrite,IRWrite ,PCWrite ,Branch,PCSrc,ALUSrcA ,RegWrite,RegDst,MemToReg;
+output wire IorD,MemWrite,IRWrite ,PCWrite ,Branch,ALUSrcA ,RegWrite,RegDst,MemToReg;
 output wire [1:0] ALUSrcB ;
 output wire [1:0] ALUOp;
+output wire [1:0] PCSrc;
 // local params 
 
 
@@ -83,7 +84,12 @@ parameter S0 = 4'b0000 ,
           S5 = 4'b0101,
           S6 = 4'b0110,
           S7 = 4'b0111,
-          S8 = 4'b1000;
+          S8 = 4'b1000,
+          S9 = 4'b1001,
+          S10 = 4'b1010,
+          S11 = 4'b1011;
+          
+
 
 reg [3:0] state,state_nxt;
 
@@ -118,6 +124,10 @@ always@(*) begin
             state_nxt = S6;
         else if (Opcode ==  6'b000100) 
             state_nxt = S8;
+        else if (Opcode == 6'b001000)
+            state_nxt = S9;
+        else if (Opcode == 6'b000010 )
+            state_nxt = S11;
         else
             state_nxt = S0;
     
@@ -135,6 +145,10 @@ always@(*) begin
     S6: state_nxt = S7;
     S7: state_nxt = S0;
     S8: state_nxt = S0;
+    S9: state_nxt = S10;
+    S10: state_nxt = S0;
+    S11: state_nxt = S0;
+    
 
     default :state_nxt = S0;
 
@@ -144,24 +158,28 @@ always@(*) begin
 
 end
 
-reg [13:0] fmsc;
+reg [14:0] fmsc;
 assign {IorD,MemWrite,IRWrite,PCWrite,Branch ,PCSrc ,ALUOp,ALUSrcB,ALUSrcA ,RegWrite,RegDst,MemToReg} = fmsc;
 
 
 always@(*) begin
 
     case(state)
-        S0: fmsc = 14'b00110000010000;
-        S1: fmsc = 14'b00000000110000;
-        S2: fmsc = 14'b00000000101000;
-        S3: fmsc = 14'b10000000000000; 
-        S5: fmsc = 14'b11000000000000;
-        S4: fmsc = 14'b00000000000101;
-        S6: fmsc = 14'b00000010001000;
-        S7: fmsc = 14'b00000000000110;
-        S8: fmsc = 14'b00001101001000;
+        S0: fmsc = 15'b001100000010000;
+        S1: fmsc = 15'b000000000110000;
+        S2: fmsc = 15'b000000000101000;
+        S3: fmsc = 15'b100000000000000; 
+        S5: fmsc = 15'b110000000000000;
+        S4: fmsc = 15'b000000000000101;
+        S6: fmsc = 15'b000000010001000;
+        S7: fmsc = 15'b000000000000110;
+        S8: fmsc = 15'b000010101001000;
+        S9: fmsc = 15'b000000000101000;
+        S10: fmsc = 15'b000000000000100;
+        S11: fmsc = 15'b000101000000000;
+        
     default:
-            fmsc = 14'b00000000000000;
+            fmsc = 15'b000000000000000;
     endcase
 end
 endmodule
@@ -184,7 +202,8 @@ input wire clk,reset;
 input wire [5:0] Opcode,Funct;
 input wire Zero;
 
-output wire IorD,MemWrite,IRWrite,PCSrc ,ALUSrcA ,RegWrite,RegDst,MemToReg;
+output wire IorD,MemWrite,IRWrite ,ALUSrcA ,RegWrite,RegDst,MemToReg;
+output wire [1:0] PCSrc;
 output wire [1:0] ALUSrcB;
 output wire [3:0] ALUControl;
 output wire PCEn;

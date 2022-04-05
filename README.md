@@ -68,7 +68,7 @@ Q1. 如何根据 PC 寻址 ？
 
 Q2. 如何根据 opcode 生成控制信号 ？
 
-- 控制信号决定了 DataPath 的数据流向，生成过程抽象来看是 OPCode -> DataPath control signal && ALUOp signal -> **ALUOp signal** or **funct** -> alucontrolle 。
+- 控制信号决定了 DataPath 的数据流向，生成过程抽象来看是 OPCode -> DataPath control signal && ALUOp signal -> **ALUOp signal** or **funct** -> alucontrol 。
 
   **_example_**
 
@@ -96,8 +96,8 @@ MemWrite = 0
 IRWrite = 1
 PCWrite = 1
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  ADD
+PCSrc  = 2'b00 
+ALUOp =  2'b00
 ALUSrcB = 2'b01
 ALUSrcA = 0
 RegWrite = 0
@@ -115,8 +115,8 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  ADD
+PCSrc  = 2'b00 
+ALUOp =  2'b00
 ALUSrcB = 2'b11
 ALUSrcA = 0
 RegWrite = 0
@@ -132,8 +132,8 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  ADD
+PCSrc  = 2'b00 
+ALUOp =  2'b00
 ALUSrcB = 2'b10
 ALUSrcA = 1
 RegWrite = 0
@@ -150,10 +150,10 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  xxx
-ALUSrcB = xx 
-ALUSrcA = xx
+PCSrc  = 2'b00 
+ALUOp = 2'b00
+ALUSrcB = 2'b00 
+ALUSrcA = 0
 RegWrite = 0
 RegDst = 0
 MemToReg = 0
@@ -171,10 +171,10 @@ MemWrite = 1
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  xxx
-ALUSrcB = xx 
-ALUSrcA = xx
+PCSrc  = 2'b00 
+ALUOp =  2'b00
+ALUSrcB = 2'b00 
+ALUSrcA = 0
 RegWrite = 0
 RegDst = 0
 MemToReg = 0
@@ -190,10 +190,10 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  xxx
-ALUSrcB = xx 
-ALUSrcA = xx
+PCSrc  = 2'b00 
+ALUOp =  2'b00
+ALUSrcB = 2'b00 
+ALUSrcA = 0
 RegWrite = 1
 RegDst = 0
 MemToReg = 1
@@ -208,8 +208,8 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  funct10
+PCSrc  = 2'b00 
+ALUOp =  2'b10
 ALUSrcB = 2'b00
 ALUSrcA = 1
 RegWrite = 0
@@ -222,10 +222,10 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 0 
-PCSrc  = 0 
-ALUControl =  xxx
-ALUSrcB = xx
-ALUSrcA = xx
+PCSrc  = 2'b00 
+ALUOp =  2'b00
+ALUSrcB = 2'b00
+ALUSrcA = 0
 RegWrite = 1
 RegDst = 1
 MemToReg = 0
@@ -238,10 +238,54 @@ MemWrite = 0
 IRWrite = 0
 PCWrite = 0
 Branch = 1
-PCSrc  = 1 
-ALUControl =  sub 
+PCSrc  = 2'b01 
+ALUOp =  2'b01 
 ALUSrcB = 2'b00
 ALUSrcA = 1
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+#### BEQ ， cycle 3  ADDI S9
+
+
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0
+PCSrc  = 2'b00 
+ALUOp =  2'b00 
+ALUSrcB = 2'b10
+ALUSrcA = 1
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+#### BEQ ， cycle 4 ADDI WriteBack   S10
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0
+PCSrc  = 2'b00 
+ALUOp =  2'b00 
+ALUSrcB = 2'b00
+ALUSrcA = 0
+RegWrite = 1
+RegDst = 0
+MemToReg = 0
+
+#### BEQ ， cycle 3 Jump   S11
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 1
+Branch = 0
+PCSrc  = 2'b10
+ALUOp =  2'b00 
+ALUSrcB = 2'b00
+ALUSrcA = 0
 RegWrite = 0
 RegDst = 0
 MemToReg = 0

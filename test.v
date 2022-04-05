@@ -4,10 +4,9 @@
 module testbench_();
 
 reg clk,reset;
-wire [31:0] writedata,dataadr,pc,instr,pcnext;
-wire memwrite;
+wire [31:0] pc,pcnext;
 
-top dut(clk,reset,pc,pcnext,instr,writedata,dataadr,memwrite);
+top dut(clk,reset,pc,pcnext);
 
 
 initial begin
@@ -34,23 +33,9 @@ initial begin
             @(negedge clk) begin
                 
 
-            $display("time: %d    pc: %h   pcnext: %h  instr: %h  memwrite %b  dataadr %d writedata %d",
-                    $time,pc,pcnext,instr, memwrite,dataadr,writedata);
+            $display("time: %d    pc: %h   pcnext: %h ",$time,pc,pcnext);
                 
-               
-            // if(memwrite) begin
-            //     if(dataadr===84 & writedata===7) begin
-            //         $display("Simulation successed ");
-            //         $stop;
-            //     end else if (dataadr !== 80 )begin
-
-            //         $display("Simulation failed ");
-            //         $stop;
-            //     end
-
-            // end
-
-            if(pc===32'h58) begin
+            if(pc===32'h20) begin
 
                 $display("Simulation successed ");
                 $stop;
@@ -58,9 +43,6 @@ initial begin
             end
 
             
-
-        
-
         end
     end
 end

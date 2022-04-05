@@ -82,3 +82,166 @@ Q2. 如何根据 opcode 生成控制信号 ？
 
 对于 I type 指令，需要对 imm 进行符号扩展，16->32。对于逻辑 op，往往需要 0 扩展。
 
+
+
+
+
+## 多周期处理器
+
+### 设计一个控制器
+
+#### 在指令周期的开始，cycle 1。  Fetch S0
+IorD = 0 
+MemWrite = 0 
+IRWrite = 1
+PCWrite = 1
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  ADD
+ALUSrcB = 2'b01
+ALUSrcA = 0
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+在这个时钟周期，已经拿到了pcnext = pc+ 4 , Instr寄存器;
+
+
+
+
+#### decode ，cycle 2。  Decode S1
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  ADD
+ALUSrcB = 2'b11
+ALUSrcA = 0
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+decode，并且计算出 pc + SignImml2 放到ALUResult。
+假设下一条指令是beq，否则ALUResult会被覆盖丢弃。
+
+#### LW or SW ，cycle 3   MemAdr S2         
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  ADD
+ALUSrcB = 2'b10
+ALUSrcA = 1
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+计算出源寄存器和立即数的结果到ALUResult，上一步中的结果pc + SignImml2 会流向ALUOUt。
+
+
+#### LW，cycle 4      MemRead S3             
+
+IorD = 1           
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  xxx
+ALUSrcB = xx 
+ALUSrcA = xx
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+这个cycle中，源寄存器和立即数的ALUResult流向ALUout。
+从而在下一步中将memory RD 写入到Data。
+
+
+
+#### SW，cycle 4      MemWrite S5             
+
+
+IorD = 1           
+MemWrite = 1 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  xxx
+ALUSrcB = xx 
+ALUSrcA = xx
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+这个cycle中，源寄存器和立即数的ALUResult流向ALUout。
+
+
+
+#### LW cycle 5   MemWriteBack S4
+
+IorD = 0
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  xxx
+ALUSrcB = xx 
+ALUSrcA = xx
+RegWrite = 1
+RegDst = 0
+MemToReg = 1
+
+memory RD的数据写入到Data。
+
+
+
+#### R Type ，cycle 3   Execute S6         
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  funct10
+ALUSrcB = 2'b00
+ALUSrcA = 1
+RegWrite = 0
+RegDst = 0
+MemToReg = 0
+
+#### R Type ，cycle 4   ALUWriteBack S7         
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 0 
+PCSrc  = 0 
+ALUControl =  xxx
+ALUSrcB = xx
+ALUSrcA = xx
+RegWrite = 1
+RegDst = 1
+MemToReg = 0
+
+
+#### BEQ ， cycle 3  Branch S8
+
+IorD = 0 
+MemWrite = 0 
+IRWrite = 0
+PCWrite = 0
+Branch = 1
+PCSrc  = 1 
+ALUControl =  sub 
+ALUSrcB = 2'b00
+ALUSrcA = 1
+RegWrite = 0
+RegDst = 0
+MemToReg = 0

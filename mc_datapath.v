@@ -1,5 +1,4 @@
 `include "flopr.v"
-`include "mems.v"
 `include "mux2.v"
 `include "regfile.v"
 `include "signext.v"

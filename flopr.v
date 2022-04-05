@@ -36,8 +36,6 @@ always@(posedge clk or posedge reset) begin
         q<=0;
     else if (signal)
         q<=d;
-    else
-        q<=q;
 
     
 end

@@ -1,42 +1,33 @@
-`include "mips.v"
-`include "mems.v"
+`include "mc_mips.v"
+`include "mc_mems.v"
 
 
 
 module top(
 
-    clk,reset,pc,pcnext,instr,
-    writedata,dataadr,
-    memwrite
+    clk,reset,pc,pcnext
 
 );
 
 input wire clk,reset;
-
-output wire[31:0] writedata,dataadr,pcnext;
-output wire memwrite;
-output wire[31:0] pc;
+output wire[31:0] pc,pcnext;
 
 
-//local params;
+//local params
 
-wire [31:0] readdata;
+wire[31:0] memoryRD,memoryWD,Adr;
+wire MemWrite;
 
-output wire[31:0] instr;
 
-/*
-module mips(
 
-    clk,reset,
-    pc,instr,
-    memwrite,
-    aluout,writedata,
-    readdata
+mc_mips mcm(clk,reset,pc,pcnext,memoryRD,Adr,memoryWD,MemWrite
+
 );
-*/
-mips mips_(clk,reset,pc,pcnext,instr,memwrite,dataadr,writedata,readdata);
-imem imem_(pc[7:2],instr);
-dmem dmem_(clk,memwrite,dataadr,writedata,readdata);
+
+mc_mems m_____(
+    clk,MemWrite,Adr,memoryRD,memoryWD
+
+);
 
 
 endmodule

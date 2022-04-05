@@ -1,45 +1,3 @@
-/*  p239
-    controller : mips控制器
-
-    main dec : 根据6bits opcode 生成控制信号
-    {MemToReg, MemWrite , Branch ,ALUop ,ALUSrc,RegDst,
-    RegWrite ,Jump }
-*/
-module maindec (
-    opcode,
-    MemToReg,MemWrite,
-    Branch,ALUSrc,
-    RegDst,RegWrite,
-    Jump,ALUop,PcsrcChoose
-
-);
-input wire [5:0] opcode;
-output wire MemToReg,MemWrite,Branch,ALUSrc,RegDst,RegWrite,Jump,PcsrcChoose;
-output wire[1:0] ALUop;
-
-reg [9:0] controller_xbits;
-
-assign {RegWrite,RegDst,ALUSrc,Branch,MemWrite,MemToReg,Jump,ALUop,PcsrcChoose} = controller_xbits;
-
-always @(*) begin
-
-    case (opcode)
-        6'b000000: controller_xbits = 10'b1100000101;//R 
-        6'b100011: controller_xbits = 10'b1010010001;//lw
-        6'b101011: controller_xbits = 10'b0010100001;//sw
-        6'b000100: controller_xbits = 10'b0001000011;//beq
-        6'b000101: controller_xbits = 10'b0001000010;//neq
-        6'b001000: controller_xbits = 10'b1010000001;//addi
-        6'b000010: controller_xbits = 10'b0000001001;//j
-        default: controller_xbits = 10'bxxxxxxxxxx;//illegal op
-    endcase
-
-    
-end
-    
-endmodule
-
-
 
 module aludec (
    funct,aluop,
@@ -92,57 +50,314 @@ end
 endmodule
 
 
-module controller(
 
-    opcode,funct,
-    zero,
-    memtoreg,memwrite,
-    pcsrc,alusrc,
-    regdst,regwrite,
-    jump,
-    alucontrol,shamt_c
+
+
+
+
+
+module fms_controller(
+    clk,reset,
+    Opcode,
+    IorD,MemWrite,IRWrite ,PCWrite ,Branch,
+    PCSrc ,ALUOp,ALUSrcB ,ALUSrcA ,RegWrite,
+    RegDst,MemToReg
+
 );
 
-input wire[5:0] opcode;
-input wire [5:0] funct;
-input wire zero;
-output wire  memtoreg,memwrite,alusrc,regdst,regwrite,jump;
-output reg pcsrc;
-output wire[3:0] alucontrol;
-output wire shamt_c;
-wire branch;
-wire [1:0] aluop;
-wire pcsrcchoose;
+input wire clk,reset;
+
+input wire[5:0] Opcode;
+
+output reg IorD,MemWrite,IRWrite ,PCWrite ,Branch,PCSrc,ALUSrcA ,RegWrite,RegDst,MemToReg;
+output reg [1:0] ALUSrcB ;
+output reg [1:0] ALUOp;
+// local params 
+
+
+
+parameter S0 = 0 ,
+          S1 = 1,
+          S2 = 2,
+          S3 = 3,
+          S4 = 4,
+          S5 = 5,
+          S6 = 6,
+          S7 = 7,
+          S8 = 8;
+reg [3:0] state,state_nxt;
+
+
+
+always@(posedge clk or posedge reset) begin
+
+
+    if(reset)
+        state <=  S0;
+    else
+        state <= state_nxt; 
+
+end
 
 /*
-
-module maindec (
-    opcode,
-    MemToReg,MemWrite,
-    Branch,ALUSrc,
-    RegDst,RegWrite,
-    Jump,ALUop
-
-);
+        6'b000000 //R 
+        6'b100011 //lw
+        6'b101011 //sw
+        6'b000100 //beq
+        6'b000101 //neq
+        6'b001000 //addi
+        6'b000010 //j
 */
-maindec md(opcode,memtoreg,memwrite,branch,alusrc,regdst,regwrite,jump,
-            aluop,pcsrcchoose);
+always@(*) begin
 
-/*
-module aludec (
-   funct,aluop,
-   ALUcontrol_4bit
-);
-*/
+    case(state)
+    S0: state_nxt = S1;
+    S1: if(Opcode == 6'b100011 || Opcode == 6'b101011) 
+            state_nxt = S2;
+        else if (Opcode == 6'b000000 )
+            state_nxt = S6;
+        else if (Opcode ==  6'b000100) 
+            state_nxt = S8;
+    
+    
+    S2: if(Opcode == 6'b100011) 
+            state_nxt = S3;
+        else if (Opcode == 6'b101011)
+            state_nxt = S5;
 
-aludec ad(funct,aluop,alucontrol,shamt_c);
+
+    S3: state_nxt = S4;
+    S4: state_nxt = S0;
+    S5: state_nxt = S0;
+    S6: state_nxt = S7;
+    S7: state_nxt = S0;
+    S8: state_nxt = S0;
+
+
+
+
+    default :state_nxt = S0;
+
+    endcase
+
+
+
+end
 
 
 always@(*) begin
-    if(pcsrcchoose)
-        pcsrc = branch & zero;
-    else
-        pcsrc = branch & (~zero);
+
+    case(state)
+
+    S0:begin
+
+        IorD = 0 ;
+        MemWrite = 0; 
+        IRWrite = 1;
+        PCWrite = 1;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp = 2'b00;
+        ALUSrcB = 2'b01;
+        ALUSrcA = 0;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+        end
+    S1:begin
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp = 2'b00;
+        ALUSrcB = 2'b11;
+        ALUSrcA = 0;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+
+        end
+    
+    S2:begin
+
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp = 2'b00;
+        ALUSrcB = 2'b10;
+        ALUSrcA = 1;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+         end
+
+    
+    S3:begin 
+
+        IorD = 1  ;      
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp = 2'b00;
+        ALUSrcB = 2'b00; 
+        ALUSrcA = 0;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+        end
+
+    S5:begin
+
+
+        IorD = 1 ;          
+        MemWrite = 1; 
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp =  2'b00;
+        ALUSrcB = 2'b00; 
+        ALUSrcA =0;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+    end
+
+    S4:begin
+
+
+        IorD = 0;
+        MemWrite = 0; 
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp =  2'b00;
+        ALUSrcB = 2'b00; 
+        ALUSrcA = 0;
+        RegWrite = 1;
+        RegDst = 0;
+        MemToReg = 1;
+    end
+
+    S6:begin
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp =  2'b10;
+        ALUSrcB = 2'b00;
+        ALUSrcA = 1;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+    end
+
+    S7:begin
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0 ;
+        PCSrc  = 0 ;
+        ALUOp =  2'b00;
+        ALUSrcB = 2'b00;
+        ALUSrcA = 0;
+        RegWrite = 1;
+        RegDst = 1;
+        MemToReg = 0;
+    end
+
+    S8:begin
+
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 1;
+        PCSrc  = 1 ;
+        ALUOp =  2'b01; 
+        ALUSrcB = 2'b00;
+        ALUSrcA = 1;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+    end
+
+
+
+    default:begin
+
+        IorD = 0 ;
+        MemWrite = 0 ;
+        IRWrite = 0;
+        PCWrite = 0;
+        Branch = 0;
+        PCSrc  = 0 ;
+        ALUOp =  2'b00; 
+        ALUSrcB = 2'b00;
+        ALUSrcA = 0;
+        RegWrite = 0;
+        RegDst = 0;
+        MemToReg = 0;
+    end
+
+
+
+    endcase
+
+
+
 end
+
+
+endmodule
+
+
+
+
+module mc_controller(
+    clk,reset,
+    Opcode,Funct,Zero,
+    IorD,MemWrite,IRWrite,
+    PCSrc,ALUSrcB ,ALUSrcA ,RegWrite,
+    RegDst,MemToReg,ALUControl,PCEn
+
+);
+
+
+input wire clk,reset;
+
+input wire [5:0] Opcode,Funct;
+input wire Zero;
+
+output wire IorD,MemWrite,IRWrite,PCSrc ,ALUSrcA ,RegWrite,RegDst,MemToReg;
+output wire [1:0] ALUSrcB;
+output wire [3:0] ALUControl;
+output wire PCEn;
+wire [1:0] ALUOp;
+wire PCWrite ,Branch;
+wire shamt_c;
+
+fms_controller fms(
+    clk,reset,Opcode,IorD,MemWrite,IRWrite ,PCWrite ,Branch,PCSrc ,ALUOp,ALUSrcB ,ALUSrcA ,RegWrite,
+    RegDst,MemToReg
+);
+
+
+aludec alu_(Funct,ALUOp,ALUControl,shamt_c);
+
+
+assign PCEn = ((Zero & Branch) | PCWrite);
+
 
 endmodule

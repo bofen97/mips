@@ -20,14 +20,9 @@ wire MemWrite;
 
 
 
-mc_mips mcm(clk,reset,pc,pcnext,memoryRD,Adr,memoryWD,MemWrite
+mc_mips mcm(clk,reset,pc,pcnext,memoryRD,Adr,memoryWD,MemWrite);
 
-);
-
-mc_mems m_____(
-    clk,MemWrite,Adr,memoryRD,memoryWD
-
-);
+mc_mems idmems(clk,MemWrite,Adr,memoryRD,memoryWD);
 
 
 endmodule

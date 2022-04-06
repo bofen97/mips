@@ -5,38 +5,29 @@
 
 module top(
 
-    clk,reset,pc,pcnext,instr,
-    writedata,dataadr,
-    memwrite
+    clk,reset,pc,pcnext,ImmRD
+
 
 );
 
 input wire clk,reset;
+output wire [31:0] pc,pcnext,ImmRD;
 
-output wire[31:0] writedata,dataadr,pcnext;
-output wire memwrite;
-output wire[31:0] pc;
 
 
 //local params;
 
-wire [31:0] readdata;
 
-output wire[31:0] instr;
 
-/*
-module mips(
+wire [31:0] DmmRD,ALUOutM,WriteDataM;
+wire MemWriteM;
 
-    clk,reset,
-    pc,instr,
-    memwrite,
-    aluout,writedata,
-    readdata
+
+mips mips_(
+    clk,reset,pc,pcnext,ImmRD,DmmRD,MemWriteM,ALUOutM,WriteDataM
 );
-*/
-mips mips_(clk,reset,pc,pcnext,instr,memwrite,dataadr,writedata,readdata);
-imem imem_(pc[7:2],instr);
-dmem dmem_(clk,memwrite,dataadr,writedata,readdata);
+imem imem_(pc[7:2],ImmRD);
+dmem dmem_(clk,MemWriteM,ALUOutM,WriteDataM,DmmRD);
 
 
 endmodule

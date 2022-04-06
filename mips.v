@@ -1,82 +1,43 @@
 `include "controller.v"
-`include "datapath.v"
-module mips(
+`include "new_datapath.v"
 
-    clk,reset,
-    pc,pcnext,instr,
-    memwrite,
-    aluout,writedata,
-    readdata
+module mips(
+    clk,reset,PCF,pcnext,ImmRD,DmmRD,MemWriteM,ALUOutM,WriteDataM
 );
 
 input wire clk,reset;
-input wire[31:0] instr;
-input wire[31:0] readdata;
+input wire [31:0] ImmRD,DmmRD;
 
-output wire[31:0] pc;
-output wire memwrite;
-output wire[31:0]  aluout,writedata;
-
+output wire [31:0] PCF,pcnext;
+output wire [31:0] ALUOutM,WriteDataM;
+output wire MemWriteM;
 
 
-//local params
+wire [5:0] opcode,funct;
+wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
+wire [3:0] ALUControlD;
 
-/*
 
-module controller(
 
+
+
+controller c(
     opcode,funct,
-    zero,
-    memtoreg,memwrite,
-    pcsrc,alusrc,
-    regdst,regwrite,
-    jump,
-    alucontrol
+    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD
 );
 
-*/
-
-wire zero,memtoreg,pcsrc , alusrc,regdst,regwrite,jump;
-wire [3:0] alucontrol;
-wire shamt_c;
 
 
-output wire[31:0] pcnext; 
-controller ct(
-    instr[31:26],instr[5:0],
-    zero,memtoreg,memwrite,
-    pcsrc,alusrc,regdst,regwrite,
-    jump,alucontrol,shamt_c
+
+new_datapath nd(
+   clk,reset,PCF,pcnext,
+   ImmRD,opcode,funct,
+   RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
+   DmmRD,MemWriteM,ALUOutM,WriteDataM,
+
 );
 
-/*
-module datapath(
 
-    clk,reset,
-    memtoreg,pcsrc,
-    alusrc,regdst,
-    regwrite,jump,
-    alucontrol,
-    zero,
-    pc,
-    instr,
-    aluout,writedata,
-    readdata
-);
-*/
-
-datapath dp(
-    clk,reset,
-    memtoreg,pcsrc,
-    alusrc,regdst,
-    regwrite,jump,
-    alucontrol,shamt_c,
-    zero,
-    pc,
-    instr,
-    aluout,writedata,
-    readdata,pcnext
-);
 
 
 

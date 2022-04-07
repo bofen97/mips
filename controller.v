@@ -1,10 +1,4 @@
-/*  p239
-    controller : mips控制器
 
-    main dec : 根据6bits opcode 生成控制信号
-    {MemToReg, MemWrite , Branch ,ALUop ,ALUSrc,RegDst,
-    RegWrite ,Jump }
-*/
 module maindec (
     opcode,RegWrite,
     MemToReg,MemWrite,

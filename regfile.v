@@ -17,7 +17,7 @@ output wire [31:0] read_data_p1,read_data_p2;
 
 reg [31:0] regs [31:0];
 
-always @(negedge reg_clk ) begin
+always @(posedge reg_clk ) begin
 
     if(regwrite)
         regs[write_3] <= write_data_p3;

@@ -10,9 +10,22 @@ module new_datapath (
    clk,reset,PCF,pcnext,
    ImmRD,Opcode,Funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
-   DmmRD,MemWriteM,ALUOutM,WriteDataM,
+   DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW
 
 );
+
+
+
+//--- debug define 
+
+output wire [4:0] DEBUG_WriteRegW;
+output wire DEBUG_RegWriteW;
+
+assign DEBUG_RegWriteW = RegWriteW;
+assign DEBUG_WriteRegW  = WriteRegW;
+
+
+//---
 
 input wire clk , reset;
 input wire[31:0] ImmRD;//从外部存储器输入到datapath
@@ -62,7 +75,6 @@ flopr #(.WIDTH (64)) fd_reg(clk,reset,{ImmRD,PCPlus4F},FD); //至此，在clk的
 wire [31:0] InstrD;
 wire [31:0] PCPlus4D;
 wire [31:0] RD1,RD2;
-wire RegWriteW;
 wire [31:0] SignImmD;
 wire [147:0] DE;
 
@@ -121,7 +133,7 @@ adder add_pc(PCPlus4E,SignImmESl2,PCBranchE);
 
 
 flopr #(.WIDTH (106))em_reg(
-    clk,reset,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
+      clk,reset,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
             WriteRegE,PCBranchE},EM);
 
 wire RegWriteM,MemtoRegM,BranchM,ZeroM;
@@ -145,18 +157,19 @@ assign PCBranchM = EM[31:0];
 
 wire [70:0] MW;
 
-flopr #(.WIDTH (71)) mw_reg(clk,reset,{RegwriteM,MemtoRegM,ALUOutM,DmmRD,WriteRegM},MW);
+flopr #(.WIDTH (71)) mw_reg(clk,reset,{RegWriteM,MemtoRegM,ALUOutM,DmmRD,WriteRegM},MW);
 
 
-
-wire MemtoregW;
+wire RegWriteW,MemtoregW;
 wire [31:0] ALUOutW;
 wire [31:0] ReadDataW;
 wire [4:0]  WriteRegW;
 wire [31:0] ResultW;
 
 
-assign {RegWriteW,MemtoregW} = MW[70:69];
+assign  {RegWriteW,MemtoregW} = MW[70:69];
+
+
 assign ALUOutW = MW[68:37];
 assign ReadDataW = MW[36:5];
 assign WriteRegW = MW[4:0];

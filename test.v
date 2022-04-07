@@ -5,8 +5,11 @@ module testbench_();
 
 reg clk,reset;
 wire [31:0] pc,instr,pcnext,ALUOutM;
+wire [4:0] DEBUG_WriteRegW;
+wire DEBUG_RegWriteW;
 
-top dut(clk,reset,pc,pcnext,instr,ALUOutM);
+
+top dut(clk,reset,pc,pcnext,instr,ALUOutM,DEBUG_WriteRegW,DEBUG_RegWriteW);
 
 
 initial begin
@@ -33,8 +36,8 @@ initial begin
             @(negedge clk) begin
                 
 
-            $display("time: %d    pc: %h   pcnext: %h  instr: %h  aluout: %h ",
-                    $time,pc,pcnext,instr,ALUOutM);
+            $display("time: %d    pc: %h   pcnext: %h  instr: %h  aluout: %h  regwrite : %h , writereg: %h",
+                    $time,pc,pcnext,instr,ALUOutM,DEBUG_RegWriteW,DEBUG_WriteRegW);
             if(pc===32'h58) begin
 
                 $display("Simulation successed ");

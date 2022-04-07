@@ -5,13 +5,13 @@
 
 module top(
 
-    clk,reset,pc,pcnext,ImmRD
+    clk,reset,pc,pcnext,ImmRD,ALUOutM
 
 
 );
 
 input wire clk,reset;
-output wire [31:0] pc,pcnext,ImmRD;
+output wire [31:0] pc,pcnext,ImmRD,ALUOutM;
 
 
 
@@ -19,7 +19,7 @@ output wire [31:0] pc,pcnext,ImmRD;
 
 
 
-wire [31:0] DmmRD,ALUOutM,WriteDataM;
+wire [31:0] DmmRD,WriteDataM;
 wire MemWriteM;
 
 

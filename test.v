@@ -4,9 +4,9 @@
 module testbench_();
 
 reg clk,reset;
-wire [31:0] pc,instr,pcnext;
+wire [31:0] pc,instr,pcnext,ALUOutM;
 
-top dut(clk,reset,pc,pcnext,instr);
+top dut(clk,reset,pc,pcnext,instr,ALUOutM);
 
 
 initial begin
@@ -33,8 +33,8 @@ initial begin
             @(negedge clk) begin
                 
 
-            $display("time: %d    pc: %h   pcnext: %h  instr: %h ",
-                    $time,pc,pcnext,instr);
+            $display("time: %d    pc: %h   pcnext: %h  instr: %h  aluout: %h ",
+                    $time,pc,pcnext,instr,ALUOutM);
             if(pc===32'h58) begin
 
                 $display("Simulation successed ");

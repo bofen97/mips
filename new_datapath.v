@@ -5,13 +5,13 @@
 `include "alu.v"
 `include "mux2.v"
 `include "sl2.v"
-
+`include "mux3.v"
 module new_datapath (
    clk,reset,PCF,pcnext,
    ImmRD,Opcode,Funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
-   JumpD
+   JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW
 
 );
 
@@ -43,8 +43,10 @@ input wire JumpD;
 input wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
 input wire [3:0] ALUControlD;
 
-
+input wire [1:0] ForwardAE,ForwardBE;
 //local params
+output wire RegWriteW;
+output wire [4:0]  WriteRegW;
 
 //Fetch define
 wire [31:0] PCPlus4F;
@@ -124,16 +126,18 @@ assign {RegWriteE,MemtoRegE,MemWriteE,BranchE,ALUControlE,ALUSrcE,RegDstE}=DE[14
 
 wire [31:0] SrcAE,SrcBE;
 wire [31:0] WriteDataE;
-wire [4:0] RtE,RdE,WriteRegE;
+wire [4:0] RdE,WriteRegE;
 wire [31:0] SignImmE,PCPlus4E;
 wire [31:0] ALUOutE;
 wire ZeroE;
 wire [31:0] SignImmESl2;
 wire [31:0] PCBranchE;
 wire [105:0] EM;
+output wire [4:0] RtE,RsE;
 
-assign SrcAE =  DE[137:106];
-assign WriteDataE= DE[105:74];
+
+flopr #(.WIDTH (5)) rse_reg(clk,reset,InstrD[25:21],RsE);
+
 assign RtE = DE[73:69];
 assign RdE = DE[68:64];
 assign SignImmE = DE[63:32];
@@ -142,6 +146,8 @@ assign PCPlus4E = DE[31:0];
 
 
 
+mux3 choose_srca(DE[137:106],ResultW,ALUOutM,ForwardAE,SrcAE);
+mux3 choose_writedatae(DE[105:74],ResultW,ALUOutM,ForwardBE,WriteDataE);
 
 mux2 #(.WIDTH (32)) choose_srcbe(WriteDataE,SignImmE,ALUSrcE,SrcBE);
 alu alu_e(SrcAE,SrcBE,ALUControlE,ALUOutE,ZeroE);
@@ -155,11 +161,12 @@ flopr #(.WIDTH (106))em_reg(
       clk,reset,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
             WriteRegE,PCBranchE},EM);
 
-wire RegWriteM,MemtoRegM,BranchM,ZeroM;
+wire MemtoRegM,BranchM,ZeroM;
+output wire RegWriteM;
 output wire MemWriteM;
 wire PCSrcM;
 output wire [31:0] WriteDataM;
-wire [4:0] WriteRegM; 
+output wire [4:0] WriteRegM; 
 wire [31:0] PCBranchM;
 
 assign {RegWriteM,MemtoRegM,MemWriteM,BranchM,ZeroM} = EM[105:101];
@@ -178,11 +185,9 @@ wire [70:0] MW;
 
 flopr #(.WIDTH (71)) mw_reg(clk,reset,{RegWriteM,MemtoRegM,ALUOutM,DmmRD,WriteRegM},MW);
 
-
-wire RegWriteW,MemtoregW;
+wire MemtoregW;
 wire [31:0] ALUOutW;
 wire [31:0] ReadDataW;
-wire [4:0]  WriteRegW;
 wire [31:0] ResultW;
 
 

@@ -43,8 +43,9 @@ initial begin
     
     
     RAM[13] = 32'b000100_00100_00011_0000000000000001;// beq $4 $3 label14
-
-    //label14 is here 
+    
+    RAM[17] = 32'b000010_00000000000000000000010010; // j instr18
+    RAM[18] = 32'hffffffff;
     
     
     

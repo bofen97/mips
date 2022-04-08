@@ -18,13 +18,13 @@ wire [5:0] opcode,funct;
 wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
 wire [3:0] ALUControlD;
 
-
+wire JumpD;
 
 
 
 controller c(
     opcode,funct,
-    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD
+    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,JumpD
 );
 
 
@@ -37,7 +37,7 @@ new_datapath nd(
    clk,reset,PCF,pcnext,
    ImmRD,opcode,funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
-   DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW
+   DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,JumpD
 
 );
 

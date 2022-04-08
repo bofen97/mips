@@ -70,7 +70,7 @@ endmodule
 module controller(
     opcode,funct,
 
-    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD
+    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,JumpD
 
     
 );
@@ -79,7 +79,7 @@ input wire[5:0] opcode,funct;
 output wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
 output wire  [3:0] ALUControlD;
 
-wire JumpD;
+output wire JumpD;
 wire [1:0] ALUopD;
 
 

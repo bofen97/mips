@@ -10,7 +10,8 @@ module new_datapath (
    clk,reset,PCF,pcnext,
    ImmRD,Opcode,Funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
-   DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW
+   DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
+   JumpD
 
 );
 
@@ -37,7 +38,7 @@ output wire [5:0] Opcode,Funct;
 output wire [31:0] ALUOutM;
 
 
-
+input wire JumpD;
 //控制信号 10 bits
 input wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
 input wire [3:0] ALUControlD;
@@ -65,7 +66,7 @@ wire [63:0] FD;//流水线寄存器
 
 flopr #(.WIDTH (32)) pcf_reg(clk,reset,pcnext,PCF);
 
-adder pcplus4_adder(PCF,32'b0100,PCPlus4F);
+adder pcplus4_adder(PCF,4,PCPlus4F);
 
 flopr #(.WIDTH (64)) fd_reg(clk,reset,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
 //第一个周期，完成了取指令。
@@ -78,6 +79,15 @@ wire [31:0] RD1,RD2;
 wire [31:0] SignImmD;
 wire [147:0] DE;
 
+wire [31:0] JumpAddressE;
+wire [31:0] JumpAddressM;
+wire [31:0] pc_prenext;
+
+
+wire JumpE;
+wire JumpM;
+
+
 assign InstrD = FD[63:32];
 
 assign PCPlus4D = FD[31:0];
@@ -86,6 +96,15 @@ signext sg(InstrD[15:0],SignImmD);
 
 assign Opcode = InstrD[31:26];
 assign Funct = InstrD[5:0];
+
+// pc + 4 高4位 和 instr 低26 和 2位00
+flopr #(.WIDTH (32)) jumpde_reg(clk,reset,{PCPlus4D[31:28],InstrD[25:0],2'b00},JumpAddressE);
+flopr #(.WIDTH (32)) jumpem_reg(clk,reset,JumpAddressE,JumpAddressM);
+
+flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,JumpD,JumpE);
+flopr #(.WIDTH (1)) jumpsignal_emreg(clk,reset,JumpE,JumpM);
+
+
 
 
 
@@ -177,7 +196,8 @@ assign WriteRegW = MW[4:0];
 mux2 #(.WIDTH (32)) choose_result(ALUOutW,ReadDataW,MemtoregW,ResultW);
 
 
-mux2 #(.WIDTH (32)) choose_pcnext(PCPlus4F,PCBranchM,PCSrcM,pcnext);
+mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchM,PCSrcM,pc_prenext);
+mux2 #(.WIDTH (32)) choose_pcnext(pc_prenext,JumpAddressM,JumpM,pcnext);
 
 
 endmodule

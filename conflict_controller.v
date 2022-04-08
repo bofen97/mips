@@ -38,3 +38,42 @@ end
 
 
 endmodule
+
+
+
+module stall_contorller(
+    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE
+);
+
+
+input wire [4:0] RsD,RtD,RtE;
+input wire MemtoRegE;
+output reg StallD,StallF,FlushE;
+
+always@(*) begin
+
+    //default .
+    StallD = 0;
+    StallF = 0;
+    FlushE = 0;
+
+
+        if (((RsD == RtE) || (RtD == RtE)) && MemtoRegE) begin
+
+            StallD = 1;
+            StallF = 1;
+            FlushE = 1;
+
+        end
+
+
+
+
+
+
+end
+
+
+
+
+endmodule

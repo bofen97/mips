@@ -11,7 +11,8 @@ module new_datapath (
    ImmRD,Opcode,Funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
-   JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW
+   JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
+   StallF,StallD,FlushE,MemtoRegE,RsD,RtD
 
 );
 
@@ -37,6 +38,7 @@ output wire[31:0] PCF,pcnext; //地址总线访问外部存储器
 output wire [5:0] Opcode,Funct;
 output wire [31:0] ALUOutM;
 
+input wire StallF,StallD,FlushE;
 
 input wire JumpD;
 //控制信号 10 bits
@@ -52,25 +54,16 @@ output wire [4:0]  WriteRegW;
 wire [31:0] PCPlus4F;
 wire [63:0] FD;//流水线寄存器
 
-//Decode define 
-
-//10bits control signal,32 bits RD1, 32 bits Rd2,
-//5 bits RtD, 5 bits RdD,32 bits signext,32 bits PCPlus4D;
-
-
-
-// Excute define .
 
 
 
 
-// Fetch stage
 
-flopr #(.WIDTH (32)) pcf_reg(clk,reset,pcnext,PCF);
+flopr #(.WIDTH (32)) pcf_reg(clk,reset,StallF,1'b0,pcnext,PCF);
 
 adder pcplus4_adder(PCF,4,PCPlus4F);
 
-flopr #(.WIDTH (64)) fd_reg(clk,reset,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
+flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,1'b0,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
 //第一个周期，完成了取指令。
 //下一个clk posedge 到来。FD拿到第一个周期的指令和pc+4 ，并且开始取新的指令
 
@@ -100,11 +93,16 @@ assign Opcode = InstrD[31:26];
 assign Funct = InstrD[5:0];
 
 // pc + 4 高4位 和 instr 低26 和 2位00
-flopr #(.WIDTH (32)) jumpde_reg(clk,reset,{PCPlus4D[31:28],InstrD[25:0],2'b00},JumpAddressE);
-flopr #(.WIDTH (32)) jumpem_reg(clk,reset,JumpAddressE,JumpAddressM);
+flopr #(.WIDTH (32)) jumpde_reg(clk,reset,1'b0,FlushE,{PCPlus4D[31:28],InstrD[25:0],2'b00},JumpAddressE);
+flopr #(.WIDTH (32)) jumpem_reg(clk,reset,1'b0,1'b0,JumpAddressE,JumpAddressM);
 
-flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,JumpD,JumpE);
-flopr #(.WIDTH (1)) jumpsignal_emreg(clk,reset,JumpE,JumpM);
+flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,1'b0,FlushE,JumpD,JumpE);
+flopr #(.WIDTH (1)) jumpsignal_emreg(clk,reset,1'b0,1'b0,JumpE,JumpM);
+
+output wire [4:0] RsD,RtD;
+assign RsD = InstrD[25:21];
+assign RtD = InstrD[20:16];
+
 
 
 
@@ -114,12 +112,13 @@ regfile regs(clk,RegWriteW,InstrD[25:21],InstrD[20:16],WriteRegW,ResultW,RD1,RD2
 
 
 
-flopr #(.WIDTH (148)) de_reg(clk,reset,{RegWriteD,MemtoRegD,MemWriteD,
+flopr #(.WIDTH (148)) de_reg(clk,reset,1'b0,FlushE,{RegWriteD,MemtoRegD,MemWriteD,
                 BranchD,ALUControlD,ALUSrcD,RegDstD,
                 RD1,RD2,InstrD[20:16],InstrD[15:11],SignImmD,PCPlus4D},DE);
 // 完成译码
 // Excute stage
-wire RegWriteE,MemtoRegE,MemWriteE,BranchE,ALUSrcE,RegDstE;
+wire RegWriteE,MemWriteE,BranchE,ALUSrcE,RegDstE;
+output wire MemtoRegE;
 wire [3:0] ALUControlE;
 
 assign {RegWriteE,MemtoRegE,MemWriteE,BranchE,ALUControlE,ALUSrcE,RegDstE}=DE[147:138];
@@ -136,7 +135,7 @@ wire [105:0] EM;
 output wire [4:0] RtE,RsE;
 
 
-flopr #(.WIDTH (5)) rse_reg(clk,reset,InstrD[25:21],RsE);
+flopr #(.WIDTH (5)) rse_reg(clk,reset,1'b0,FlushE,InstrD[25:21],RsE);
 
 assign RtE = DE[73:69];
 assign RdE = DE[68:64];
@@ -158,7 +157,7 @@ adder add_pc(PCPlus4E,SignImmESl2,PCBranchE);
 
 
 flopr #(.WIDTH (106))em_reg(
-      clk,reset,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
+      clk,reset,1'b0,1'b0,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
             WriteRegE,PCBranchE},EM);
 
 wire MemtoRegM,BranchM,ZeroM;
@@ -183,7 +182,7 @@ assign PCBranchM = EM[31:0];
 
 wire [70:0] MW;
 
-flopr #(.WIDTH (71)) mw_reg(clk,reset,{RegWriteM,MemtoRegM,ALUOutM,DmmRD,WriteRegM},MW);
+flopr #(.WIDTH (71)) mw_reg(clk,reset,1'b0,1'b0,{RegWriteM,MemtoRegM,ALUOutM,DmmRD,WriteRegM},MW);
 
 wire MemtoregW;
 wire [31:0] ALUOutW;

@@ -3,7 +3,8 @@
 `include "conflict_controller.v"
 
 module mips(
-    clk,reset,PCF,pcnext,ImmRD,DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW
+    clk,reset,PCF,pcnext,ImmRD,DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
+    StallD,StallF,FlushE
 );
 
 input wire clk,reset;
@@ -13,6 +14,7 @@ output wire [31:0] PCF,pcnext;
 output wire [31:0] ALUOutM,WriteDataM;
 output wire MemWriteM;
 
+output wire StallD,StallF,FlushE;
 
 
 wire [5:0] opcode,funct;
@@ -39,7 +41,8 @@ new_datapath nd(
    ImmRD,opcode,funct,
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,JumpD,
-   ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW
+   ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
+   StallF,StallD,FlushE,MemtoRegE,RsD,RtD
 
 );
 
@@ -54,6 +57,13 @@ wire [1:0] ForwardAE,ForwardBE;
 conflict_controller fc(
     RsE,RtE,WriteRegM,RegWriteM,
     WriteRegW,RegWriteW,ForwardAE,ForwardBE
+);
+
+wire [4:0] RsD,RtD;
+wire MemtoRegE;
+
+stall_contorller sc(
+    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE
 );
 
 

@@ -12,7 +12,8 @@ module new_datapath (
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
    JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
-   StallF,StallD,FlushE,MemtoRegE,RsD,RtD
+   StallF,StallD,FlushE,MemtoRegE,RsD,RtD,
+   ForwardAD,ForwardBD
 
 );
 
@@ -40,6 +41,8 @@ output wire [31:0] ALUOutM;
 
 input wire StallF,StallD,FlushE;
 
+input wire ForwardAD,ForwardBD;
+
 input wire JumpD;
 //控制信号 10 bits
 input wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
@@ -49,6 +52,7 @@ input wire [1:0] ForwardAE,ForwardBE;
 //local params
 output wire RegWriteW;
 output wire [4:0]  WriteRegW;
+wire PCSrcD;
 
 //Fetch define
 wire [31:0] PCPlus4F;
@@ -63,7 +67,7 @@ flopr #(.WIDTH (32)) pcf_reg(clk,reset,StallF,1'b0,pcnext,PCF);
 
 adder pcplus4_adder(PCF,4,PCPlus4F);
 
-flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,1'b0,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
+flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,PCSrcD,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
 //第一个周期，完成了取指令。
 //下一个clk posedge 到来。FD拿到第一个周期的指令和pc+4 ，并且开始取新的指令
 
@@ -103,12 +107,21 @@ output wire [4:0] RsD,RtD;
 assign RsD = InstrD[25:21];
 assign RtD = InstrD[20:16];
 
+wire [31:0] EqualSrcA,EqualSrcB;
 
-
-
-
+wire [31:0] SignImmDSl2;
+wire [31:0] PCBranchD;
+sl2 sds_reg(SignImmD,SignImmDSl2);
+adder pcbranchd_reg(PCPlus4D,SignImmDSl2,PCBranchD);
 
 regfile regs(clk,RegWriteW,InstrD[25:21],InstrD[20:16],WriteRegW,ResultW,RD1,RD2);
+
+mux2 #(.WIDTH (32)) choose_equalsrca(RD1,ALUOutM,ForwardAD,EqualSrcA);
+mux2 #(.WIDTH (32)) choose_equalsrcb(RD2,ALUOutM,ForwardBD,EqualSrcB);
+
+
+assign PCSrcD  =  BranchD && (EqualSrcA==EqualSrcB);
+
 
 
 
@@ -200,7 +213,7 @@ assign WriteRegW = MW[4:0];
 mux2 #(.WIDTH (32)) choose_result(ALUOutW,ReadDataW,MemtoregW,ResultW);
 
 
-mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchM,PCSrcM,pc_prenext);
+mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchD,PCSrcD,pc_prenext);
 mux2 #(.WIDTH (32)) choose_pcnext(pc_prenext,JumpAddressM,JumpM,pcnext);
 
 

@@ -1,15 +1,30 @@
 module conflict_controller(
 
     RsE,RtE,WriteRegM,RegWriteM,WriteRegW,RegWriteW,
-    ForwardAE,ForwardBE
+    ForwardAE,ForwardBE,ForwardAD,ForwardBD,RsD,RtD
 
 
 );
 
-input wire [4:0] RsE,RtE; //两个源寄存器
+input wire [4:0] RsE,RtE,RsD,RtD; //两个源寄存器
 input wire [4:0] WriteRegM,WriteRegW;//Memory , WriteBack阶段需要写的寄存器
 input wire RegWriteM,RegWriteW; //Memory , WriteBack阶段的写寄存器信号
 output reg[1:0] ForwardAE,ForwardBE ; //把什么输入给ALU？
+output reg ForwardAD,ForwardBD;
+
+always@(*) begin
+    if ((RsD!=0) && (RsD==WriteRegM) && RegWriteM)
+        ForwardAD = 1'b1;
+    else
+        ForwardAD = 1'b0;
+end
+
+always@(*) begin
+    if ((RtD!=0) && (RtD==WriteRegM) && RegWriteM)
+        ForwardBD = 1'b1;
+    else
+        ForwardBD = 1'b0;
+end
 
 
 always@(*) begin

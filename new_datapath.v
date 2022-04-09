@@ -13,7 +13,8 @@ module new_datapath (
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,
    JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
    StallF,StallD,FlushE,MemtoRegE,RsD,RtD,
-   ForwardAD,ForwardBD
+   ForwardAD,ForwardBD,
+   RegWriteE,WriteRegE,MemtoRegM
 
 );
 
@@ -130,7 +131,8 @@ flopr #(.WIDTH (148)) de_reg(clk,reset,1'b0,FlushE,{RegWriteD,MemtoRegD,MemWrite
                 RD1,RD2,InstrD[20:16],InstrD[15:11],SignImmD,PCPlus4D},DE);
 // 完成译码
 // Excute stage
-wire RegWriteE,MemWriteE,BranchE,ALUSrcE,RegDstE;
+wire MemWriteE,BranchE,ALUSrcE,RegDstE;
+output wire RegWriteE;
 output wire MemtoRegE;
 wire [3:0] ALUControlE;
 
@@ -138,7 +140,8 @@ assign {RegWriteE,MemtoRegE,MemWriteE,BranchE,ALUControlE,ALUSrcE,RegDstE}=DE[14
 
 wire [31:0] SrcAE,SrcBE;
 wire [31:0] WriteDataE;
-wire [4:0] RdE,WriteRegE;
+wire [4:0] RdE;
+output wire [4:0] WriteRegE;
 wire [31:0] SignImmE,PCPlus4E;
 wire [31:0] ALUOutE;
 wire ZeroE;
@@ -173,12 +176,14 @@ flopr #(.WIDTH (106))em_reg(
       clk,reset,1'b0,1'b0,{RegWriteE,MemtoRegE,MemWriteE,BranchE,ZeroE,ALUOutE,WriteDataE,
             WriteRegE,PCBranchE},EM);
 
-wire MemtoRegM,BranchM,ZeroM;
+wire BranchM,ZeroM;
+output wire MemtoRegM;
+
 output wire RegWriteM;
 output wire MemWriteM;
 wire PCSrcM;
 output wire [31:0] WriteDataM;
-output wire [4:0] WriteRegM; 
+output wire [4:0] WriteRegM;
 wire [31:0] PCBranchM;
 
 assign {RegWriteM,MemtoRegM,MemWriteM,BranchM,ZeroM} = EM[105:101];

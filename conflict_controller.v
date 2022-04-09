@@ -57,20 +57,22 @@ endmodule
 
 
 module stall_contorller(
-    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE
+    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE,
+    RegWriteE,BranchD,WriteRegE,
+    MemtoRegM,WriteRegM
 );
 
 
 input wire [4:0] RsD,RtD,RtE;
 input wire MemtoRegE;
 output reg StallD,StallF,FlushE;
+input wire RegWriteE,BranchD;
+input wire [4:0] WriteRegE;
+input wire MemtoRegM;
+input wire [4:0] WriteRegM;
+
 
 always@(*) begin
-
-    //default .
-    StallD = 0;
-    StallF = 0;
-    FlushE = 0;
 
 
         if (((RsD == RtE) || (RtD == RtE)) && MemtoRegE) begin
@@ -80,6 +82,28 @@ always@(*) begin
             FlushE = 1;
 
         end
+        else if (BranchD && RegWriteE && (RsD == WriteRegE || RtD == WriteRegE)) begin
+            
+            StallD = 1;
+            StallF = 1;
+            FlushE = 1;
+        end
+        else if  (BranchD && MemtoRegM && (RsD == WriteRegM || RtD == WriteRegM) ) begin
+
+            StallD = 1;
+            StallF = 1;
+            FlushE = 1;
+
+        end 
+        else begin
+
+            StallD = 0;
+            StallF = 0;
+            FlushE = 0;
+        end
+
+
+
 
 
 

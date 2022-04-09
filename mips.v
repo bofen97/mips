@@ -42,7 +42,8 @@ new_datapath nd(
    RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUControlD,ALUSrcD,RegDstD,
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,JumpD,
    ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
-   StallF,StallD,FlushE,MemtoRegE,RsD,RtD,ForwardAD,ForwardBD
+   StallF,StallD,FlushE,MemtoRegE,RsD,RtD,ForwardAD,ForwardBD,
+   RegWriteE,WriteRegE,MemtoRegM
 
 );
 
@@ -63,8 +64,14 @@ conflict_controller fc(
 wire [4:0] RsD,RtD;
 wire MemtoRegE;
 
+wire RegWriteE;
+wire [4:0] WriteRegE;
+wire MemtoRegM;
+
 stall_contorller sc(
-    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE
+    StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE,
+    RegWriteE,BranchD,WriteRegE,
+    MemtoRegM,WriteRegM
 );
 
 

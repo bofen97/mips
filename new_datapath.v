@@ -14,7 +14,8 @@ module new_datapath (
    JumpD,ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
    StallF,StallD,FlushE,MemtoRegE,RsD,RtD,
    ForwardAD,ForwardBD,
-   RegWriteE,WriteRegE,MemtoRegM
+   RegWriteE,WriteRegE,MemtoRegM,
+   BranchE
 
 );
 
@@ -54,6 +55,7 @@ input wire [1:0] ForwardAE,ForwardBE;
 output wire RegWriteW;
 output wire [4:0]  WriteRegW;
 wire PCSrcD;
+wire PCSrcE;
 
 //Fetch define
 wire [31:0] PCPlus4F;
@@ -68,7 +70,7 @@ flopr #(.WIDTH (32)) pcf_reg(clk,reset,StallF,1'b0,pcnext,PCF);
 
 adder pcplus4_adder(PCF,4,PCPlus4F);
 //决定跳转，所以情况Fetch阶段的指令
-flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,PCSrcD|JumpD,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
+flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,PCSrcE|JumpD,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
 //第一个周期，完成了取指令。
 //下一个clk posedge 到来。FD拿到第一个周期的指令和pc+4 ，并且开始取新的指令
 
@@ -100,10 +102,10 @@ assign Funct = InstrD[5:0];
 // pc + 4 高4位 和 instr 低26 和 2位00
 wire [31:0] JumpAddressD;
 assign JumpAddressD = {PCPlus4D[31:28],InstrD[25:0],2'b00};
-flopr #(.WIDTH (32)) jumpde_reg(clk,reset,1'b0,FlushE,JumpAddressD,JumpAddressE);
+flopr #(.WIDTH (32)) jumpde_reg(clk,reset,1'b0,FlushE|PCSrcE,JumpAddressD,JumpAddressE);
 flopr #(.WIDTH (32)) jumpem_reg(clk,reset,1'b0,1'b0,JumpAddressE,JumpAddressM);
 
-flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,1'b0,FlushE,JumpD,JumpE);
+flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,1'b0,FlushE|PCSrcE,JumpD,JumpE);
 flopr #(.WIDTH (1)) jumpsignal_emreg(clk,reset,1'b0,1'b0,JumpE,JumpM);
 
 output wire [4:0] RsD,RtD;
@@ -128,12 +130,13 @@ assign PCSrcD  =  BranchD && (EqualSrcA==EqualSrcB);
 
 
 
-flopr #(.WIDTH (148)) de_reg(clk,reset,1'b0,FlushE,{RegWriteD,MemtoRegD,MemWriteD,
+flopr #(.WIDTH (148)) de_reg(clk,reset,1'b0,FlushE|PCSrcE,{RegWriteD,MemtoRegD,MemWriteD,
                 BranchD,ALUControlD,ALUSrcD,RegDstD,
                 RD1,RD2,InstrD[20:16],InstrD[15:11],SignImmD,PCPlus4D},DE);
 // 完成译码
 // Excute stage
-wire MemWriteE,BranchE,ALUSrcE,RegDstE;
+output wire BranchE;
+wire MemWriteE,ALUSrcE,RegDstE;
 output wire RegWriteE;
 output wire MemtoRegE;
 wire [3:0] ALUControlE;
@@ -153,7 +156,7 @@ wire [105:0] EM;
 output wire [4:0] RtE,RsE;
 
 
-flopr #(.WIDTH (5)) rse_reg(clk,reset,1'b0,FlushE,InstrD[25:21],RsE);
+flopr #(.WIDTH (5)) rse_reg(clk,reset,1'b0,FlushE|PCSrcE,InstrD[25:21],RsE);
 
 assign RtE = DE[73:69];
 assign RdE = DE[68:64];
@@ -165,6 +168,7 @@ assign PCPlus4E = DE[31:0];
 
 mux3 choose_srca(DE[137:106],ResultW,ALUOutM,ForwardAE,SrcAE);
 mux3 choose_writedatae(DE[105:74],ResultW,ALUOutM,ForwardBE,WriteDataE);
+assign PCSrcE =  (SrcAE== WriteDataE) && BranchE;
 
 mux2 #(.WIDTH (32)) choose_srcbe(WriteDataE,SignImmE,ALUSrcE,SrcBE);
 alu alu_e(SrcAE,SrcBE,ALUControlE,ALUOutE,ZeroE);
@@ -220,7 +224,7 @@ assign WriteRegW = MW[4:0];
 mux2 #(.WIDTH (32)) choose_result(ALUOutW,ReadDataW,MemtoregW,ResultW);
 
 //在decode阶段的到nextpc，之前是memory阶段
-mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchD,PCSrcD,pc_prenext);
+mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchE,PCSrcE,pc_prenext);
 mux2 #(.WIDTH (32)) choose_pcnext(pc_prenext,JumpAddressD,JumpD,pcnext);
 
 

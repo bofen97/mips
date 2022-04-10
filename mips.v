@@ -20,7 +20,7 @@ output wire StallD,StallF,FlushE;
 wire [5:0] opcode,funct;
 wire RegWriteD,MemtoRegD,MemWriteD,BranchD,ALUSrcD,RegDstD;
 wire [3:0] ALUControlD;
-
+wire BranchE;
 wire JumpD;
 
 
@@ -43,7 +43,8 @@ new_datapath nd(
    DmmRD,MemWriteM,ALUOutM,WriteDataM,DEBUG_WriteRegW,DEBUG_RegWriteW,JumpD,
    ForwardAE,ForwardBE,RtE,RsE,WriteRegM,WriteRegW,RegWriteM,RegWriteW,
    StallF,StallD,FlushE,MemtoRegE,RsD,RtD,ForwardAD,ForwardBD,
-   RegWriteE,WriteRegE,MemtoRegM
+   RegWriteE,WriteRegE,MemtoRegM,
+   BranchE
 
 );
 
@@ -71,7 +72,8 @@ wire MemtoRegM;
 stall_contorller sc(
     StallD,StallF,FlushE,RsD,RtD,RtE,MemtoRegE,
     RegWriteE,BranchD,WriteRegE,
-    MemtoRegM,WriteRegM
+    MemtoRegM,WriteRegM,
+    BranchE,RsE
 );
 
 

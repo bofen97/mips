@@ -39,7 +39,7 @@ initial begin
 
             $display("time: %d    pc: %h   pcnext: %h  instr: %h  aluout: %h  regwrite : %h , writereg: %h  stalld  %b stallf %b flushe %b " ,
                     $time,pc,pcnext,instr,ALUOutM,DEBUG_RegWriteW,DEBUG_WriteRegW,StallD,StallF,FlushE);
-            if(pc===32'h58) begin
+            if(pc===32'h5c) begin
 
                 $display("Simulation successed ");
                 $stop;

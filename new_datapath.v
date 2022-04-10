@@ -67,8 +67,8 @@ wire [63:0] FD;//流水线寄存器
 flopr #(.WIDTH (32)) pcf_reg(clk,reset,StallF,1'b0,pcnext,PCF);
 
 adder pcplus4_adder(PCF,4,PCPlus4F);
-
-flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,PCSrcD,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
+//决定跳转，所以情况Fetch阶段的指令
+flopr #(.WIDTH (64)) fd_reg(clk,reset,StallD,PCSrcD|JumpD,{ImmRD,PCPlus4F},FD); //至此，在clk的posedge 拿到了指令和pc+4
 //第一个周期，完成了取指令。
 //下一个clk posedge 到来。FD拿到第一个周期的指令和pc+4 ，并且开始取新的指令
 
@@ -98,7 +98,9 @@ assign Opcode = InstrD[31:26];
 assign Funct = InstrD[5:0];
 
 // pc + 4 高4位 和 instr 低26 和 2位00
-flopr #(.WIDTH (32)) jumpde_reg(clk,reset,1'b0,FlushE,{PCPlus4D[31:28],InstrD[25:0],2'b00},JumpAddressE);
+wire [31:0] JumpAddressD;
+assign JumpAddressD = {PCPlus4D[31:28],InstrD[25:0],2'b00};
+flopr #(.WIDTH (32)) jumpde_reg(clk,reset,1'b0,FlushE,JumpAddressD,JumpAddressE);
 flopr #(.WIDTH (32)) jumpem_reg(clk,reset,1'b0,1'b0,JumpAddressE,JumpAddressM);
 
 flopr #(.WIDTH (1)) jumpsignal_dereg(clk,reset,1'b0,FlushE,JumpD,JumpE);
@@ -217,9 +219,9 @@ assign WriteRegW = MW[4:0];
 
 mux2 #(.WIDTH (32)) choose_result(ALUOutW,ReadDataW,MemtoregW,ResultW);
 
-
+//在decode阶段的到nextpc，之前是memory阶段
 mux2 #(.WIDTH (32)) choose_pcprenext(PCPlus4F,PCBranchD,PCSrcD,pc_prenext);
-mux2 #(.WIDTH (32)) choose_pcnext(pc_prenext,JumpAddressM,JumpM,pcnext);
+mux2 #(.WIDTH (32)) choose_pcnext(pc_prenext,JumpAddressD,JumpD,pcnext);
 
 
 endmodule

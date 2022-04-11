@@ -97,13 +97,6 @@ always@(*) begin
             FlushE = 1;
 
         end
-        else if (BranchE && MemtoRegM && (RsE == WriteRegM || RtE == WriteRegM) ) begin
-            
-            StallD = 1;
-            StallF = 1;
-            FlushE = 1;
-        end
-
         else begin
 
             StallD = 0;
